@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
+
+# 一个基于 DNSPod API v3 的 DDNS Shell 脚本 
+# A DDNS Shell script based on DNSPod API v3
 #
-#           A DDNS Shell script
 # https://github.com/qingzi-zhang/ddnss.sh
 #
 # Copyright (c) 2024 Ken <qingzi dot zhang at outlook dot com>
@@ -19,6 +21,19 @@
 #
 # DNSPod API v3 documentation at https://cloud.tencent.com/document/api/1427
 
+# 配置文件格式说明 / Configuration file format:
+# Tencent_SecretId=your_secret_id   # DNSPod API 密钥ID / API Secret ID
+# Tencent_SecretKey=your_secret_key # DNSPod API 密钥Key / API Secret Key
+# DNS_Server=8.8.8.8                # DNS服务器(可选) / DNS Server (optional)
+# Log_File=/var/log/ddnss/ddnss.log # 日志文件路径 / Log file path
+#
+# DDNS记录格式 / DDNS record format:
+# DDNS=domain_full_name, ip_version, interface, eui64_suffix
+# 示例 / Example:
+# DDNS=test.example.com,ipv4,eth0
+# DDNS=test.example.com,ipv6,eth0,1:2:3:4
+
+# 全局变量 / Global variables
 AGENT="A DDNS Shell script/v24.12.0-rc5 (404919@qq.com)"
 TAG="ddns-shell"
 
@@ -52,6 +67,7 @@ host="dnspod.tencentcloudapi.com"
 service="dnspod"
 version="2021-03-23"
 
+# 显示帮助信息 / Show help message
 show_help() {
   echo "Usage:
   $(basename "$0") [options]
@@ -63,6 +79,10 @@ Options:
   --log-level=<0|1>    Set the log level to 0 or 1 (0: Error, 1: Verbose)"
 }
 
+# 写入日志文件 / Write to log file
+# $1: 动作 / Action
+# $2: API名称 / API name  
+# $3: 消息内容 / Message content
 log_to_file() {
   # Validate the arguments action ($1), API ($2) and message ($3)
   if [ -z "$1" ] || [ -z "$2" ] ||  [ -z "$3" ]; then
@@ -89,7 +109,7 @@ log_to_file() {
   printf -- '{"%s":"%s","%s":%s}\n' "${log_time}" "$1" "$2" "$3" >> "${log_file}"
 }
 
-# Function to get the IP Address of a network interface via 'ip' Command
+# 获取网络接口IP地址 / Get IP address from network interface
 get_ip_interface() {
   if [ "${record_type}" = "A" ]; then
     # https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml
@@ -163,7 +183,7 @@ get_ip_interface() {
   fi
 }
 
-# Function to get the IP address of a dynamic DNS via 'nslookup' command
+# 通过nslookup查询DNS记录 / Query DNS record via nslookup
 get_ip_nslookup() {
   # Retrieve DNS records via nslookup
   response="$(nslookup -type="${record_type}" "${domain_full_name}" "${dns_server}")"
@@ -186,6 +206,7 @@ get_ip_nslookup() {
   fi
 }
 
+# 生成API签名 / Generate API signature
 tc3_signature() {
   # Function to calculate the openssl HMAC-SHA256 hash of a string with a secret key
   tc3_hmac_sha256() {
@@ -220,6 +241,7 @@ tc3_signature() {
   authorization="$algorithm Credential=${secret_id}/${credential_scope}, SignedHeaders=${signed_headers}, Signature=${signature}"
 }
 
+# 处理API错误 / Handle API error response
 tc3_api_err() {
   # Extract the error code
   err_code="$(echo "${response}" | sed -n 's/.*"Code":"\([^"]\+\)".*/\1/p')"
@@ -231,6 +253,7 @@ tc3_api_err() {
   fi
 }
 
+# 发送API请求 / Send API request
 tc3_api_req() {
   timestamp="$(date +%s)"
   date="$(date -u -d "@$timestamp" +%Y-%m-%d 2>/dev/null)"
@@ -252,27 +275,28 @@ tc3_api_req() {
   return $?
 }
 
-# Preparing to create a new DDNS record if it does not exist (DNSPod API: CreateRecord)
+# 创建新DNS记录 / Create new DNS record
 insert_record() {
   action="CreateRecord"
   payload="$(printf -- '{"Domain":"%s","SubDomain":"%s","RecordType":"%s","RecordLine":"%s","Value":"%s"}' \
     "${domain}" "${subdomain}" "${record_type}" "${record_line}" "${ip_address}")"
 }
 
-# Preparing to get the record information (DNSPod API: DescribeRecordList)
+# 查询DNS记录 / Query DNS record
 query_record() {
   action="DescribeRecordList"
   payload="$(printf -- '{"Domain":"%s","Subdomain":"%s","RecordType":"%s"}' \
     "${domain}" "${subdomain}" "${record_type}")"
 }
 
-# Preparing to update the IP address for a DDNS record (DNSPod API: ModifyDynamicDNS)
+# 更新DNS记录 / Update DNS record
 update_record() {
   action="ModifyDynamicDNS"
   payload="$(printf -- '{"Domain":"%s","RecordId":%d,"RecordLine":"%s","Value":"%s","SubDomain":"%s"}' \
     "${domain}" "${record_id}" "${record_line}" "${ip_address}" "${subdomain}")"
 }
 
+# 处理单条DDNS记录 / Handle single DDNS record
 handle_record() {
   record_line="默认"
 
@@ -325,6 +349,7 @@ handle_record() {
   logger -p notice -s -t "${TAG}" "${domain_full_name} ${ip_version} address has been updated to ${ip_address}"
 }
 
+# 处理所有DDNS记录 / Process all DDNS records
 proc_ddns_rec() {
   # Function to extract the field from a DDNS record
   # Usage: get_ddns_field field_number of a record and translate to lower case
@@ -403,6 +428,7 @@ proc_ddns_rec() {
   done
 }
 
+# 初始化配置 / Initialize configuration
 init_config() {
   # Exit if the configuration file is invalid
   if [ ! -f "${config_file}" ]; then
@@ -474,6 +500,7 @@ init_config() {
   logger -p info -s -t "${TAG}" "The log file '${log_file}' was successfully created"
 }
 
+# 解析命令行参数 / Parse command line options
 parse_opt() {
   # Parse command line options
   while [ "$#" -gt 0 ]; do
@@ -507,6 +534,7 @@ parse_opt() {
   fi
 }
 
+# 主函数 / Main function
 main() {
   parse_opt "$@" || return 1
   init_config    || return 1
