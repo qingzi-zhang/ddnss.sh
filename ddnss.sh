@@ -338,6 +338,8 @@ proc_ddns_rec() {
 
   grep "^DDNS" "${config_file}" | while IFS= read -r record; do
     # Remove all horizontal or vertical whitespace and 'DDNS=' prefix
+    # 标准格式: DDNS=domain,ip_version,interface,dns_provider,secret_id,secret_key[,eui64_suffix]
+    # 例如: DDNS=ai.ddns-shell.net,IPv6,br-lan,dnspod,secret_id,secret_key,07e2:00c:0012:aaaa
     # DDNS=ai.ddns-shell.net,IPv6,br-lan,07e2:00c:0012:aaaa,dnspod,secret_id,secret_key
     record="$(printf -- '%s' "${record}" | sed 's/\s+//g; s/^DDNS=//')"
 
@@ -413,9 +415,12 @@ proc_ddns_rec() {
       logger -p err -s -t "${TAG}" "Invalid update script '${update_script}'"
       continue
     fi
-    update_script="${DNSAPI_PATH}/${update_script}"
+        # 根据DNS提供商确定更新脚本
+    update_script="${DNSAPI_PATH}/${dns_provider}.sh"
+
+    # Validate the update script
     if [ ! -f "${update_script}" ]; then
-      logger -p err -s -t "${TAG}" "No update script '${update_script}' found"
+      logger -p err -s -t "${TAG}" "No update script found for DNS provider '${dns_provider}'"
       continue
     fi
 
