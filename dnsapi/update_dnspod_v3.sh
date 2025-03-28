@@ -30,7 +30,7 @@ tc3_api_req() {
   http_request_method="POST"
   tc3_signature
   log_to_file "REQ" "$action" "{\"Request\":${payload}}"
-  response=$(curl -A "{$AGENT}" \
+  response=$(curl -A "${AGENT}" \
     -X "${http_request_method}" "https://${host}" \
     -d "${payload}" \
     -H "Host: ${host}" \
