@@ -235,7 +235,9 @@ install() {
 
   if [ ! -d "${log_path}" ]; then
     echo "Creating the log directory '${log_path}'"
-    mkdir -p "${log_path}"
+    sudo_cmd="$(command -v sudo)"
+    $sudo_cmd mkdir -p "${log_path}"
+    $sudo_cmd chown -R "${uid}:${gid}" "${log_path}"
     [ -d "${log_path}" ] || {
       echo "Error: Failed to create the log directory '${log_path}'"
       return 1
@@ -259,8 +261,6 @@ install() {
   fi
 
   cp dnsapi/*.sh "${DNSAPI_PATH}/" >/dev/null 2>&1
-  echo "Changing files ownership to the current user: $(id)"
-  chown -R "${uid}:${gid}" "${_HOME}" "${log_path}"
 
   sha256sum_info="$(grep 'ddnss.sh' sha256sum | cut -d ' ' -f 1)"
   file_checksums="$(sha256sum "${_HOME}/${ENTRY}" | cut -d ' ' -f 1)"
