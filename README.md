@@ -21,7 +21,8 @@
 
 |Status |API Version|DDNS Services
 |:-----:|:---------:|----------------
-|✅     |V3         |Tencent DNSPod
+|✅     |v3        |Tencent DNSPod
+|WIP    |v3        | HuaweiCloud
 
 # Installation
 ## Required to install cURL and OpenSSL
@@ -40,7 +41,7 @@ opkg install curl openssl-util
 ```
 git clone https://github.com/qingzi-zhang/ddnss.sh.git
 cd ./ddnss.sh
-sudo sh ddnss.sh --install
+sh ddnss.sh --install
 ```
 
 # Configuration
