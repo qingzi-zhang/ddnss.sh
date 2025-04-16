@@ -22,7 +22,7 @@
 |Status |API Version|DDNS Services
 |:-----:|:---------:|----------------
 |✅     |v3        |Tencent DNSPod
-|WIP    |v3        | HuaweiCloud
+|✅     |v2        |HuaweiCloud DNS
 
 # Installation
 ## Required to install cURL and OpenSSL
