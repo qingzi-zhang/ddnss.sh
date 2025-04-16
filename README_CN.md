@@ -22,7 +22,7 @@
 名称|API 版本|状态
 ----|:--:|:--:|
 腾讯云 DNSPod|v3|✅
-华为云 Huaweicloud|v3|正在排期
+华为云 Huaweicloud|v2|✅
 
 # 安装
 ## 先安装运行工具： cURL(命令行数据传输工具) 和 OpenSSL(开源加密命令行工具)
