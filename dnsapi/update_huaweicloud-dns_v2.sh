@@ -83,10 +83,18 @@ hw_get_zone() {
   action="query_zones"
   http_request_method="GET"
   path="/v2/zones"
-  # Second-level domain name, e.g. example.com of sub.example.com
+  # sld_name: second-level domain name, e.g. example.com of sub.example.com
   sld_name="$(echo ${domain_full_name} | awk -F '.' '{if (NF>2) print $(NF-1)"."$NF}')"
   query_string="name=${sld_name}.&search_mode=equal"
   payload=""
+}
+
+hw_insert_record() {
+  action="create_record_sets"
+  http_request_method="POST"
+  path="/v2/zones/${zone_id}/recordsets"
+  query_string=""
+  payload="{\"name\":\"${domain_full_name}.\",\"type\":\"${record_type}\",\"records\":[\"${ip_address}\"]}"
 }
 
 hw_query_record() {
@@ -107,7 +115,7 @@ hw_set_record() {
 
 main() {
   # Get the zone information
-	hw_get_zone
+  hw_get_zone
   hw_api_req
   hw_api_err || return 1
   zone_id="$(echo "${response}" | sed -n 's/.*"id":"\([^"]\+\)".*/\1/p')"
@@ -115,6 +123,15 @@ main() {
     logger -p err -s -t "${TAG}" "Fail attempt to extract zone_id for ${domain_full_name} ${record_type} from Huaweicloud API response"
     return 1
   fi
+
+  # Attempt to insert a new DNS record
+  [ -z "${ddnss_insert_record}" ] || {
+    hw_insert_record
+    hw_api_req
+    hw_api_err || return 1
+    logger -p notice -s -t "${TAG}" "${domain_full_name} ${ip_version} ${ip_address} [CreateRecord] successfully"
+    return 0
+  }
 
   # Get the DDNS record information
   hw_query_record
