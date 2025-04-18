@@ -152,9 +152,11 @@ handle_record() {
   # Retrieve the ip address from the specified network interface
   get_ip_from_interface || return 1
   # Retrieve the ip address from the DNS server
+  unset ddnss_insert_record
   get_ip_from_nslookup  || {
     # Attempt to insert the DDNS record if it does not already exist
-    . "${update_script}" "insert"
+    ddnss_insert_record="true"
+    . "${update_script}"
     return $?
   }
 
