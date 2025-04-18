@@ -103,13 +103,13 @@ tc3_update_record() {
 
 main() {
   # Attempt to insert a new DNS record
-  if [ "$1" = "insert" ]; then
+  [ -z "${ddnss_insert_record}" ] || {
     tc3_insert_record
     tc3_api_req
     tc3_api_err || return 1
     logger -p notice -s -t "${TAG}" "${domain_full_name} ${ip_version} ${ip_address} [CreateRecord] successfully"
     return 0
-  fi
+  }
 
   # Get the DDNS record information
   tc3_query_record
