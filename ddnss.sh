@@ -17,7 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-AGENT="A DDNS Shell script/25.01.06-rc3 (qingzi.zhang@outlook.com)"
+AGENT="A DDNS Shell script/25.01.06-rc4 (qingzi.zhang@outlook.com)"
 ENTRY="ddnss.sh"
 TAG="ddnss"
 
