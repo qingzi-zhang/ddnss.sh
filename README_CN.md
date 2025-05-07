@@ -23,6 +23,7 @@
 ----|:--:|:--:|
 腾讯云 DNSPod|v3|✅
 华为云 Huaweicloud|v2|✅
+No-IP Basic|Default|✅
 
 # 安装
 ## 先安装运行工具： cURL(命令行数据传输工具) 和 OpenSSL(开源加密命令行工具)
