@@ -30,42 +30,57 @@ hw_api_err() {
   fi
 }
 
-hw_api_req() { 
+hw_api_req() {
+  # Get the current UTC timestamp in the format 'YYYYMMDDTHHMMSSZ'
   timestamp=$(date -u +'%Y%m%dT%H%M%SZ')
 
+  # Set the content type to 'application/json' for non-GET requests
   content_type=""
-  if [ ! "${http_request_method}" = "GET" ]; then
-    content_type="application/json"
-  fi
+  [ "${http_request_method}" = "GET" ] || content_type="application/json"
 
-	[ -n "${payload}" ] || payload="\"\""
+  # Set the payload to an empty string for GET requests
+  [ -n "${payload}" ] || payload="\"\""
 
+  # Construct the canonical URI, ensure it ends with a slash
   canonical_uri="${path}"
   echo "${canonical_uri}" | grep -qE "/$" || canonical_uri="${canonical_uri}/"
   canonical_query_string="${query_string}"
+  # Define the canonical headers
   canonical_headers="host:${host}\nx-sdk-date:${timestamp}\n"
+  # Define the signed headers
   signed_headers="host;x-sdk-date"
 
+  # Additional content type header for non-empty content type
   _h_content_type=""
-  if [ ! "${content_type}" = "" ]; then
+  if [ "${content_type}" != "" ]; then
     canonical_headers="host:${host}\nx-sdk-date:${timestamp}\n"
     signed_headers="host;x-sdk-date"
     _h_content_type="Content-Type: ${content_type}"
   fi
 
+  # Calculate the hashed request payload
   hashed_request_payload="$(printf -- "%b" "${payload}" | openssl dgst -sha256 -hex 2>/dev/null | sed 's/^.* //')"
+  # Construct the canonical request
   canonical_request="${http_request_method}\n${canonical_uri}\n${canonical_query_string}\n${canonical_headers}\n${signed_headers}\n${hashed_request_payload}"
+  # Calculate the hashed canonical request
   hashed_canonical_request="$(printf -- "%b" "${canonical_request}" | openssl dgst -sha256 -hex 2>/dev/null | sed 's/^.* //')"
+  # Construct the string to sign
   string_to_sign="${algorithm}\n${timestamp}\n${hashed_canonical_request}"
+  # Calculate the signature using HMAC-SHA256
   signature="$(printf -- '%b' "${string_to_sign}" | openssl dgst -sha256 -hmac "${secret_key}" -hex 2>/dev/null | sed 's/^.* //')"
+  # Construct the authorization header
   authorization="${algorithm} Access=${secret_id}, SignedHeaders=${signed_headers}, Signature=${signature}"
 
+  # Construct the request URI
 	request_uri="${host}${path}"
-  if [ -n "$query_string" ]; then
-    request_uri="${request_uri}""?${query_string}"
-  fi
 
+  # Add query string if it exists
+  [ -z "$query_string" ] ||  request_uri="${request_uri}""?${query_string}"
+
+  # Log the request
   log_to_file "REQ" "$action" "{\"Request\":\"${query_string}\",\"Payload\":${payload}}"
+
+  # Send the request using curl and capture the response
   response="$(curl -A "${AGENT}" -s \
     -X "${http_request_method}" \
     -H "X-Sdk-Date: ${timestamp}" \
@@ -75,7 +90,10 @@ hw_api_req() {
     -d "${payload}" \
        "https://${request_uri}" \
     )"
+
+  # Log the response
   log_to_file "ACK" "$action" "${response}"
+
   return $?
 }
 
