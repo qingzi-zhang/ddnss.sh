@@ -22,7 +22,7 @@
 |Status |API Version|DDNS Services
 |:-----:|:---------:|----------------
 |✅     |v2        |HuaweiCloud DNS
-|WIP    |default    |no-ip
+|✅     |Default   |No-IP Basic
 |✅     |v3        |Tencent DNSPod
 
 # Installation
