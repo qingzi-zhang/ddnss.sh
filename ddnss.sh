@@ -422,6 +422,8 @@ proc_ddns_rec() {
 
     # Set IP version to ipv6 if not specified
     ip_version="${ip_version:-ipv6}"
+    # Convert IP version to lowercase
+    ip_version="$(echo "${ip_version}" | awk '{print tolower($0)}')"
     # Set DDNS record type based on IP version
     case "${ip_version}" in
       "ipv4")
