@@ -368,14 +368,13 @@ proc_ddns_rec() {
 
   grep "^DDNS" "${config_file}" | while IFS= read -r record; do
     # Remove all horizontal or vertical whitespace and 'DDNS=' prefix
-    # DDNS=ai.ddns-shell.net,IPv6,br-lan,07e2:00c:0012:aaaa,dnspod,secret_id,secret_key
+    # DDNS=ai.ddns-shell.net,IPv6,br-lan,update_script.sh,secret_id,secret_key,07e2:00c:0012:aaaa
     record="$(printf -- '%s' "${record}" | sed 's/\s+//g; s/^DDNS=//')"
 
     # Skip empty records
     [ -z "${record}" ] && continue
 
     # Extract DDNS fields
-    # DDNS=ai.ddns.sh, IPv6, pppoe-wan, 07e2:00c:0012:aaaa, 8.8.8.8, dnspod.sh, secret_id, secret_key
     domain_full_name="$(get_ddns_field 1)"
     ip_version="$(get_ddns_field 2)"
     interface="$(get_ddns_field 3)"
@@ -420,9 +419,11 @@ proc_ddns_rec() {
       subdomain=""
     fi
 
-    # Set IP version to ipv6 if not specified
+    # Set the value of IP version to 'ipv6' if not specified
     ip_version="${ip_version:-ipv6}"
-    # Set DDNS record type based on IP version
+    # Convert the value of IP version to lowercase
+    ip_version="$(echo "${ip_version}" | awk '{print tolower($0)}')"
+    # Set the record type variable based on the value of IP version
     case "${ip_version}" in
       "ipv4")
         record_type="A"
@@ -432,10 +433,11 @@ proc_ddns_rec() {
         ;;
       *)
         logger -p err -s -t "${TAG}" "Invalid IP version '${ip_version}' of ${domain_full_name}"
-        # Skip record with invalid IP versions
+        # Skip record with invalid IP version
         continue
         ;;
     esac
+    # Format the IP version value to 'IPv4' or 'IPv6'
     ip_version="$(echo "${ip_version}" | sed 's/[iI][pP][vV]/IPv/')"
 
     # Validate the update script
