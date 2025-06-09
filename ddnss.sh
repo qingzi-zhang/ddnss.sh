@@ -167,7 +167,7 @@ handle_record() {
       echo "${domain_full_name} ${ip_version} address ${ip_address} is up to date"
     fi
     # Skip if force-update option is not enabled (The IP address is already the latest)
-    [ "$force_update" -ne 0 ] || return 0
+    [ "${force_update}" -ne 0 ] || return 0
   fi
 
   # Update the DDNS record via specified DNS API
@@ -412,8 +412,8 @@ proc_ddns_rec() {
     fi
 
     # Extract subdomain from domain name
-    if [ "$(echo "$domain_full_name" | tr -cd '.' | wc -c)"  -gt 1 ]; then
-      subdomain="$(echo "$domain_full_name" | sed "s/\.${domain}$//")"
+    if [ "$(echo "${domain_full_name}" | tr -cd '.' | wc -c)"  -gt 1 ]; then
+      subdomain="$(echo "${domain_full_name}" | sed "s/\.${domain}$//")"
     fi
     if [ "${subdomain}" = "@" ]; then
       subdomain=""
