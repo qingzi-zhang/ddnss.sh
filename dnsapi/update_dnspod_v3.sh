@@ -135,7 +135,7 @@ main() {
   # Update the DDNS record IP address
   tc3_update_record
   tc3_api_req
-  tc3_api_err || 1
+  tc3_api_err || return 1
   logger -p notice -s -t "${TAG}" "${domain_full_name} ${ip_version} address has been updated to ${ip_address}"
 }
 
