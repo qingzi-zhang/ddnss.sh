@@ -53,8 +53,6 @@ hw_api_req() {
   # Additional content type header for non-empty content type
   _h_content_type=""
   if [ "${content_type}" != "" ]; then
-    canonical_headers="host:${host}\nx-sdk-date:${timestamp}\n"
-    signed_headers="host;x-sdk-date"
     _h_content_type="Content-Type: ${content_type}"
   fi
 
@@ -101,8 +99,11 @@ hw_get_zone() {
   action="query_zones"
   http_request_method="GET"
   path="/v2/zones"
+  sld_name="${domain_full_name}"
   # sld_name: second-level domain name, e.g. example.com of sub.example.com
-  sld_name="$(echo ${domain_full_name} | awk -F '.' '{if (NF>2) print $(NF-1)"."$NF}')"
+  if [ "$(echo ${domain_full_name} | tr -cd '.' | wc -c)" -gt 1 ]; then
+    sld_name="$(echo ${domain_full_name} | awk -F '.' '{if (NF>2) print $(NF-1)"."$NF}')"
+  fi
   query_string="name=${sld_name}.&search_mode=equal"
   payload=""
 }
